@@ -21,11 +21,10 @@ func main() {
 		numWorkers int
 	)
 
-	// Разбор входных параметров
-	flag.StringVar(&sqlQuery, "query", "", "Оцениваемый SQL запрос")                             // SELECT COUNT(*) FROM test_table;
-	flag.StringVar(&dbDSN, "dsn", "", "DSN PostgreSQL")                                          // postgres://postgres:root@localhost/testdb?sslmode=disable
-	flag.IntVar(&durationMs, "duration", 1000, "Время проведения измерения RPS в миллисекундах") // значение по умолчанию 1000
-	flag.IntVar(&numWorkers, "workers", 100, "Количество конкурентных воркеров")                 // значение по умолчанию 100
+	flag.StringVar(&sqlQuery, "query", "", "Оцениваемый SQL запрос")
+	flag.StringVar(&dbDSN, "dsn", "", "DSN PostgreSQL")
+	flag.IntVar(&durationMs, "duration", 1000, "Время проведения измерения RPS в миллисекундах")
+	flag.IntVar(&numWorkers, "workers", 100, "Количество конкурентных воркеров")
 	flag.Parse()
 
 	if sqlQuery == "" || dbDSN == "" {
@@ -41,6 +40,14 @@ func main() {
 	}
 	defer db.Close()
 
+	totalQueries, elapsed, rps := RunBenchmark(sqlQuery, db, durationMs, numWorkers)
+
+	fmt.Printf("Всего выполнено запросов: %d\n", totalQueries)
+	fmt.Printf("Общее время: %v\n", elapsed)
+	fmt.Printf("RPS (запросов в секунду): %.2f\n", rps)
+}
+
+func RunBenchmark(sqlQuery string, db *sql.DB, durationMs int, numWorkers int) (int64, time.Duration, float64) {
 	duration := time.Duration(durationMs) * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
@@ -76,9 +83,7 @@ func main() {
 	totalQueries := atomic.LoadInt64(&queryCount)
 	rps := float64(totalQueries) / elapsed.Seconds()
 
-	fmt.Printf("Всего выполнено запросов: %d\n", totalQueries)
-	fmt.Printf("Общее время: %v\n", elapsed)
-	fmt.Printf("RPS (запросов в секунду): %.2f\n", rps)
+	return totalQueries, elapsed, rps
 }
 
 func executeQuery(ctx context.Context, db *sql.DB, query string) error {
