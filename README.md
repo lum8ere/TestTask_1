@@ -21,6 +21,6 @@ go build main.go
 | Параметр | Для чего | Пример | 
 | ------ | ------ | ------ | 
 | -query | Запрос который будем тестировать | SELECT COUNT(*) FROM test_table; |
-| -dsn | подключение к базе данных | postgres://postgres:root@localhost/testdb?sslmode=disable |
+| -dsn | Подключение к базе данных | postgres://postgres:root@localhost/testdb?sslmode=disable |
 | -duration | Время проведения измерения RPS в миллисекундах | 5000 (default 1000) |
 | -workers | Количество конкурентных воркеров | 50 (default 100) |
